@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>競馬買い目作成ツール</title>
     <style>
-        :root { --primary: #1b4332; --bg: #f4f7f6; }
+        :root { --primary: #1b4332; --bg: #f4f7f6; --accent: #2980b9; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #2c3e50; }
         .container { max-width: 500px; margin: 0 auto; }
         .card { background: white; padding: 18px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
@@ -16,14 +16,30 @@
         
         .btn-main { width: 100%; background: var(--primary); color: white; padding: 16px; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; }
         .btn-copy { background: #4a5568; color: white; border: none; padding: 12px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        
+        /* シミュレーター移動ボタン */
+        .btn-link { 
+            display: block; 
+            text-align: center; 
+            text-decoration: none; 
+            background: transparent; 
+            color: var(--primary); 
+            border: 2px solid var(--primary); 
+            padding: 12px; 
+            border-radius: 4px; 
+            margin-top: 12px; 
+            font-size: 14px; 
+            font-weight: bold; 
+            transition: background 0.2s;
+        }
+        .btn-link:hover { background: rgba(27, 67, 50, 0.05); }
 
         #oddsInputList { margin-top: 20px; border-top: 2px solid #eee; padding-top: 15px; display: none; }
         
-        /* 修正：1行に固定するスタイル */
         .selection-row { 
             display: flex; 
             align-items: center; 
-            justify-content: space-between; /* 両端に寄せる */
+            justify-content: space-between; 
             margin-bottom: 6px; 
             background: #f8f9fa; 
             padding: 6px 12px; 
@@ -34,12 +50,8 @@
             font-weight: bold; 
             font-size: 14px; 
             font-family: monospace; 
-            white-space: nowrap; /* 買い目を絶対に改行させない */
+            white-space: nowrap; 
             margin-right: 10px;
-        }
-        .odds-input-wrapper {
-            display: flex;
-            align-items: center;
         }
         .odds-field { 
             width: 80px; 
@@ -84,29 +96,31 @@
             
             <label>コピー用テキスト</label>
             <textarea id="finalText" readonly></textarea>
+            
             <button class="btn-copy" onclick="copyToClipboard()">結果をコピー</button>
+            
+            <a href="https://yuni1305.github.io/keiba.compare/" class="btn-link">
+                資金配分シミュレーターに移動
+            </a>
         </div>
     </div>
 </div>
 
 <script>
+// (中略：JavaScriptロジックは変更なし)
 function generateRows() {
     const mode = document.getElementById('mode').value;
     const h1 = parseInput('h1');
     const h2 = parseInput('h2');
     const h3 = parseInput('h3');
-    
     let combos = [];
     if (h1.length > 0 && h2.length === 0 && h3.length === 0) {
         combos = getBox(h1, mode);
     } else {
         combos = getFormation(h1, h2, h3, mode);
     }
-
     if (combos.length === 0) return alert("馬番を入力してください");
-
     const container = document.getElementById('fieldsContainer');
-    // HTML構造を微調整
     container.innerHTML = combos.map(c => `
         <div class="selection-row">
             <span class="selection-label">${c}</span>
@@ -116,16 +130,12 @@ function generateRows() {
             </div>
         </div>
     `).join('');
-    
     document.getElementById('oddsInputList').style.display = 'block';
     updateFinalText();
 }
 
 function formatInput(el) {
-    if (el.value !== "") {
-        el.value = parseFloat(el.value).toFixed(1);
-        updateFinalText();
-    }
+    if (el.value !== "") { el.value = parseFloat(el.value).toFixed(1); updateFinalText(); }
 }
 
 function updateFinalText() {
@@ -133,9 +143,7 @@ function updateFinalText() {
     let output = "";
     fields.forEach(f => {
         let val = f.value;
-        if (val !== "") {
-            val = parseFloat(val).toFixed(1);
-        }
+        if (val !== "") { val = parseFloat(val).toFixed(1); }
         output += `${f.dataset.label} ${val} \n`;
     });
     document.getElementById('finalText').value = output;
@@ -153,8 +161,7 @@ function getBox(list, mode) {
             if (prev.length === k) { results.push(prev.join('-')); return; }
             for (let i = start; i < arr.length; i++) { f(i + 1, [...prev, arr[i]]); }
         };
-        f(0, []);
-        return results;
+        f(0, []); return results;
     };
     const permute = (arr, k) => {
         const results = [];
@@ -162,8 +169,7 @@ function getBox(list, mode) {
             if (current.length === k) { results.push(current.join('-')); return; }
             for (let i = 0; i < remaining.length; i++) { f([...current, remaining[i]], [...remaining.slice(0, i), ...remaining.slice(i + 1)]); }
         };
-        f([], arr);
-        return results;
+        f([], arr); return results;
     };
     return mode.startsWith('fuku') ? combine(list, size) : permute(list, size);
 }
@@ -175,10 +181,7 @@ function getFormation(h1, h2, h3, mode) {
             if (a === b) return;
             if (mode.includes('3')) {
                 if (h3.length === 0) return;
-                h3.forEach(c => {
-                    if (a === c || b === c) return;
-                    res.push([a, b, c]);
-                });
+                h3.forEach(c => { if (a === c || b === c) return; res.push([a, b, c]); });
             } else { res.push([a, b]); }
         });
     });
