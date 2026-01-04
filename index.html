@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>競馬買い目ジェネレーター</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; max-width: 500px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { font-size: 18px; color: #1b4332; margin-top: 0; }
+        select, input, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
+        .result-area { margin-top: 20px; }
+        textarea { width: 100%; height: 150px; font-family: monospace; background: #f8f9fa; }
+        .label { font-size: 12px; color: #666; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>買い目ジェネレーター</h2>
+    
+    <label class="label">券種を選択</label>
+    <select id="mode">
+        <option value="fuku-2">馬連・ワイド (順不同)</option>
+        <option value="tan-2">馬単 (着順指定)</option>
+        <option value="fuku-3">三連複 (順不同)</option>
+        <option value="tan-3">三連単 (着順指定)</option>
+    </select>
+
+    <div id="inputGroup">
+        <label class="label">1頭目 / 軸 / BOX馬番</label>
+        <input type="text" id="h1" placeholder="例: 1, 2">
+        <label class="label">2頭目 / 相手1</label>
+        <input type="text" id="h2" placeholder="例: 3, 4, 5">
+        <label class="label">3頭目 / 相手2 (三連系のみ)</label>
+        <input type="text" id="h3" placeholder="例: 6, 7">
+    </div>
+
+    <button onclick="generate()" style="background: #1b4332; color: white; border: none; cursor: pointer;">買い目生成</button>
+
+    <div class="result-area">
+        <label class="label">生成結果 (コピーしてシミュレーターへ)</label>
+        <textarea id="result" readonly></textarea>
+        <button onclick="copyResult()" style="background: #e2e8f0;">結果をコピー</button>
+    </div>
+</div>
+
+<script>
+function generate() {
+    const mode = document.getElementById('mode').value;
+    const h1 = parseInput('h1');
+    const h2 = parseInput('h2');
+    const h3 = parseInput('h3');
+    
+    let combinations = [];
+
+    // --- ロジック：BOX判定 (h1のみ入力されている場合) ---
+    if (h1.length > 0 && h2.length === 0 && h3.length === 0) {
+        combinations = getBox(h1, mode);
+    } 
+    // --- ロジック：フォーメーション/流し ---
+    else {
+        combinations = getFormation(h1, h2, h3, mode);
+    }
+
+    if (combinations.length === 0) {
+        alert("馬番を正しく入力してください。\nBOXの場合は1番上の欄だけに複数入力してください。");
+        return;
+    }
+
+    // シミュレーター形式（買い目 + 半角スペース）で出力
+    document.getElementById('result').value = combinations.map(c => c + " ").join('\n');
+}
+
+function parseInput(id) {
+    return document.getElementById(id).value.split(/[ ,、]+/).filter(v => v !== "").map(String);
+}
+
+function getBox(list, mode) {
+    let res = [];
+    const size = mode.includes('2') ? 2 : 3;
+    
+    const combine = (arr, k) => {
+        const results = [];
+        const f = (start, prev) => {
+            if (prev.length === k) {
+                results.push(prev.join('-'));
+                return;
+            }
+            for (let i = start; i < arr.length; i++) {
+                f(i + 1, [...prev, arr[i]]);
+            }
+        };
+        f(0, []);
+        return results;
+    };
+
+    if (mode.startsWith('fuku')) {
+        res = combine(list, size);
+    } else {
+        // 単式BOX (馬単・三連単) は順列
+        const permute = (arr, k) => {
+            const results = [];
+            const f = (current, remaining) => {
+                if (current.length === k) {
+                    results.push(current.join('-'));
+                    return;
+                }
+                for (let i = 0; i < remaining.length; i++) {
+                    f([...current, remaining[i]], [...remaining.slice(0, i), ...remaining.slice(i + 1)]);
+                }
+            };
+            f([], arr);
+            return results;
+        };
+        res = permute(list, size);
+    }
+    return res;
+}
+
+function getFormation(h1, h2, h3, mode) {
+    let res = [];
+    h1.forEach(a => {
+        h2.forEach(b => {
+            if (a === b) return;
+            if (mode.includes('3')) {
+                h3.forEach(c => {
+                    if (a === c || b === c) return;
+                    res.push([a, b, c]);
+                });
+            } else {
+                res.push([a, b]);
+            }
+        });
+    });
+
+    if (mode.startsWith('fuku')) {
+        // 複式はソートして重複削除
+        const sorted = res.map(arr => arr.sort((x, y) => x - y).join('-'));
+        return [...new Set(sorted)];
+    } else {
+        return res.map(arr => arr.join('-'));
+    }
+}
+
+function copyResult() {
+    const txt = document.getElementById('result');
+    txt.select();
+    document.execCommand('copy');
+    alert("コピーしました！シミュレーターのプランA/Bに貼り付けてください。");
+}
+</script>
+</body>
+</html>
