@@ -2,60 +2,64 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>競馬 Selections & Odds Editor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>競馬買い目作成ツール</title>
     <style>
-        :root { --primary: #1b4332; --accent: #276749; --bg: #f4f7f6; }
+        :root { --primary: #1b4332; --bg: #f4f7f6; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #2c3e50; }
         .container { max-width: 500px; margin: 0 auto; }
         .card { background: white; padding: 18px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        h3 { margin-top: 0; color: var(--primary); font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        h3 { margin-top: 0; color: var(--primary); font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
         
-        label { display: block; font-size: 11px; font-weight: bold; color: #7f8c8d; margin-top: 10px; }
+        label { display: block; font-size: 12px; font-weight: bold; color: #7f8c8d; margin-top: 10px; margin-bottom: 4px; }
         select, input { width: 100%; padding: 12px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
         
-        .btn-main { width: 100%; background: var(--primary); color: white; padding: 14px; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        .btn-copy { background: #4a5568; color: white; border: none; padding: 10px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-main { width: 100%; background: var(--primary); color: white; padding: 16px; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .btn-copy { background: #4a5568; color: white; border: none; padding: 12px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
 
-        /* オッズ入力リストのスタイル */
         #oddsInputList { margin-top: 20px; border-top: 2px solid #eee; padding-top: 15px; display: none; }
-        .selection-row { display: flex; align-items: center; margin-bottom: 8px; background: #f8f9fa; padding: 5px 10px; border-radius: 4px; }
-        .selection-label { flex: 1; font-weight: bold; font-family: monospace; font-size: 14px; }
-        .odds-input { width: 100px; text-align: right; padding: 8px; }
+        .selection-row { display: flex; align-items: center; margin-bottom: 8px; background: #f8f9fa; padding: 6px 12px; border-radius: 4px; border: 1px solid #e2e8f0; }
+        .selection-label { flex: 1; font-weight: bold; font-size: 15px; }
+        .odds-input { width: 110px; text-align: right; padding: 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 16px; }
 
-        textarea { width: 100%; height: 120px; margin-top: 15px; font-family: monospace; font-size: 13px; box-sizing: border-box; }
+        textarea { width: 100%; height: 100px; margin-top: 15px; font-family: monospace; font-size: 13px; box-sizing: border-box; padding: 10px; border: 1px solid #eee; background: #fafafa; }
+        .help-text { font-size: 11px; color: #95a5a6; margin-top: 4px; line-height: 1.4; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h3>1. Selections（買い目生成）</h3>
+        <h3>1. 買い目を自動生成</h3>
         
-        <label>Ticket Type（券種）</label>
+        <label>券種</label>
         <select id="mode">
-            <option value="fuku-2">馬連・ワイド (Quinella)</option>
-            <option value="tan-2">馬単 (Exacta)</option>
-            <option value="fuku-3">三連複 (Trio)</option>
-            <option value="tan-3">三連単 (Trifecta)</option>
+            <option value="fuku-2">馬連・ワイド</option>
+            <option value="tan-2">馬単</option>
+            <option value="fuku-3">三連複</option>
+            <option value="tan-3">三連単</option>
         </select>
 
-        <label>1st / 軸 / BOX馬番</label>
-        <input type="text" id="h1" placeholder="例: 1, 2">
-        <label>2nd / 相手1</label>
-        <input type="text" id="h2" placeholder="例: 3, 4, 5">
-        <label>3rd / 相手2 (三連系のみ)</label>
-        <input type="text" id="h3" placeholder="例: 6">
+        <label>1頭目 / 軸 / BOX（複数の場合はカンマ区切り）</label>
+        <input type="text" id="h1" placeholder="例: 1, 2" inputmode="decimal">
+        
+        <label>2頭目 / 相手1</label>
+        <input type="text" id="h2" placeholder="例: 3, 4, 5" inputmode="decimal">
+        
+        <label>3頭目 / 相手2（三連系のみ）</label>
+        <input type="text" id="h3" placeholder="例: 6" inputmode="decimal">
+        
+        <div class="help-text">※ボックス買い：1番上の欄だけに複数の馬番を入れてください。</div>
 
-        <button class="btn-main" onclick="generateRows()">入力欄を生成</button>
+        <button class="btn-main" onclick="generateRows()">オッズ入力欄を作る</button>
 
         <div id="oddsInputList">
-            <label>2. Odds（オッズ入力）</label>
+            <label>2. オッズを入力</label>
             <div id="fieldsContainer"></div>
             
-            <label>Final Output</label>
-            <textarea id="finalText" readonly placeholder="オッズを入力するとここに生成されます"></textarea>
-            <button class="btn-copy" onclick="copyToClipboard()">結果をコピー</button>
+            <label>コピー用テキスト</label>
+            <textarea id="finalText" readonly></textarea>
+            <button class="btn-copy" onclick="copyToClipboard()">結果をコピーしてシミュレーターへ</button>
         </div>
     </div>
 </div>
@@ -68,20 +72,21 @@ function generateRows() {
     const h3 = parseInput('h3');
     
     let combos = [];
+    // 1欄目のみ入力ならBOX、それ以外ならフォーメーション/流しとして処理
     if (h1.length > 0 && h2.length === 0 && h3.length === 0) {
         combos = getBox(h1, mode);
     } else {
         combos = getFormation(h1, h2, h3, mode);
     }
 
-    if (combos.length === 0) return alert("番号を入力してください");
+    if (combos.length === 0) return alert("馬番を入力してください");
 
     const container = document.getElementById('fieldsContainer');
     container.innerHTML = combos.map(c => `
         <div class="selection-row">
             <span class="selection-label">${c}</span>
             <input type="number" step="0.1" class="odds-field" data-label="${c}" 
-                   placeholder="オッズ" oninput="updateFinalText()">
+                   placeholder="0.0" oninput="updateFinalText()" inputmode="decimal">
         </div>
     `).join('');
     
@@ -93,14 +98,14 @@ function updateFinalText() {
     const fields = document.querySelectorAll('.odds-field');
     let output = "";
     fields.forEach(f => {
-        const val = f.value || "---"; // 未入力時は---
-        output += `${f.dataset.label} ${val}\n`;
+        const val = f.value || "";
+        if(val !== "") output += `${f.dataset.label} ${val}\n`;
     });
     document.getElementById('finalText').value = output.trim();
 }
 
 function parseInput(id) {
-    return document.getElementById(id).value.split(/[ ,、]+/).filter(v => v !== "").map(String);
+    return document.getElementById(id).value.replace(/[\s　,、]+/g, ',').split(',').filter(v => v !== "").map(String);
 }
 
 function getBox(list, mode) {
@@ -132,6 +137,7 @@ function getFormation(h1, h2, h3, mode) {
         h2.forEach(b => {
             if (a === b) return;
             if (mode.includes('3')) {
+                if (h3.length === 0) return; // 3頭目未入力時はスキップ
                 h3.forEach(c => {
                     if (a === c || b === c) return;
                     res.push([a, b, c]);
@@ -140,7 +146,7 @@ function getFormation(h1, h2, h3, mode) {
         });
     });
     if (mode.startsWith('fuku')) {
-        const sorted = res.map(arr => arr.sort((x, y) => x - y).join('-'));
+        const sorted = res.map(arr => arr.sort((x, y) => Number(x) - Number(y)).join('-'));
         return [...new Set(sorted)];
     }
     return res.map(arr => arr.join('-'));
@@ -148,11 +154,11 @@ function getFormation(h1, h2, h3, mode) {
 
 function copyToClipboard() {
     const textArea = document.getElementById('finalText');
+    if(!textArea.value) return alert("オッズを入力してください");
     textArea.select();
     document.execCommand('copy');
-    alert("コピーしました！シミュレーターに貼り付けてください。");
+    alert("コピーしました！");
 }
 </script>
-
 </body>
 </html>
