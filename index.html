@@ -18,9 +18,11 @@
         .btn-copy { background: #4a5568; color: white; border: none; padding: 12px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
 
         #oddsInputList { margin-top: 20px; border-top: 2px solid #eee; padding-top: 15px; display: none; }
-        .selection-row { display: flex; align-items: center; margin-bottom: 8px; background: #f8f9fa; padding: 6px 12px; border-radius: 4px; border: 1px solid #e2e8f0; }
-        .selection-label { flex: 1; font-weight: bold; font-size: 15px; }
-        .odds-input { width: 110px; text-align: right; padding: 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 16px; }
+        .selection-row { display: flex; align-items: center; margin-bottom: 6px; background: #f8f9fa; padding: 4px 10px; border-radius: 4px; border: 1px solid #e2e8f0; }
+        .selection-label { flex: 1; font-weight: bold; font-size: 14px; font-family: monospace; }
+        
+        /* オッズ入力欄を少し狭く設定 */
+        .odds-input { width: 80px; text-align: right; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 16px; }
 
         textarea { width: 100%; height: 100px; margin-top: 15px; font-family: monospace; font-size: 13px; box-sizing: border-box; padding: 10px; border: 1px solid #eee; background: #fafafa; }
         .help-text { font-size: 11px; color: #95a5a6; margin-top: 4px; line-height: 1.4; }
@@ -30,7 +32,7 @@
 
 <div class="container">
     <div class="card">
-        <h3>買い目を自動生成</h3>
+        <h3>買い目を作成</h3>
         
         <label>券種</label>
         <select id="mode">
@@ -40,7 +42,7 @@
             <option value="tan-3">三連単</option>
         </select>
 
-        <label>1頭目 / 軸 / BOX（複数の場合はカンマ区切り）</label>
+        <label>1頭目 / 軸 / BOX</label>
         <input type="text" id="h1" placeholder="例: 1, 2" inputmode="decimal">
         
         <label>2頭目 / 相手1</label>
@@ -49,15 +51,13 @@
         <label>3頭目 / 相手2（三連系のみ）</label>
         <input type="text" id="h3" placeholder="例: 6" inputmode="decimal">
         
-        <div class="help-text">※ボックス買い：1番上の欄だけに複数の馬番を入れてください。</div>
-
-        <button class="btn-main" onclick="generateRows()">オッズ入力欄を作る</button>
+        <button class="btn-main" onclick="generateRows()">入力欄を作る</button>
 
         <div id="oddsInputList">
-            <label>2. オッズを入力</label>
+            <label>2. オッズ入力（任意）</label>
             <div id="fieldsContainer"></div>
             
-            <label>コピー用テキスト</label>
+            <label>コピー用テキスト（買い目 + オッズ + 半角空白）</label>
             <textarea id="finalText" readonly></textarea>
             <button class="btn-copy" onclick="copyToClipboard()">結果をコピーしてシミュレーターへ</button>
         </div>
@@ -72,7 +72,6 @@ function generateRows() {
     const h3 = parseInput('h3');
     
     let combos = [];
-    // 1欄目のみ入力ならBOX、それ以外ならフォーメーション/流しとして処理
     if (h1.length > 0 && h2.length === 0 && h3.length === 0) {
         combos = getBox(h1, mode);
     } else {
@@ -86,12 +85,12 @@ function generateRows() {
         <div class="selection-row">
             <span class="selection-label">${c}</span>
             <input type="number" step="0.1" class="odds-field" data-label="${c}" 
-                   placeholder="0.0" oninput="updateFinalText()" inputmode="decimal">
+                   placeholder="---" oninput="updateFinalText()" inputmode="decimal">
         </div>
     `).join('');
     
     document.getElementById('oddsInputList').style.display = 'block';
-    updateFinalText();
+    updateFinalText(); // 初期表示（オッズなし状態）を作成
 }
 
 function updateFinalText() {
@@ -99,7 +98,8 @@ function updateFinalText() {
     let output = "";
     fields.forEach(f => {
         const val = f.value || "";
-        if(val !== "") output += `${f.dataset.label} ${val}\n`;
+        // オッズがあってもなくても、最後は半角スペース
+        output += `${f.dataset.label} ${val} \n`;
     });
     document.getElementById('finalText').value = output.trim();
 }
@@ -137,7 +137,7 @@ function getFormation(h1, h2, h3, mode) {
         h2.forEach(b => {
             if (a === b) return;
             if (mode.includes('3')) {
-                if (h3.length === 0) return; // 3頭目未入力時はスキップ
+                if (h3.length === 0) return;
                 h3.forEach(c => {
                     if (a === c || b === c) return;
                     res.push([a, b, c]);
@@ -154,7 +154,7 @@ function getFormation(h1, h2, h3, mode) {
 
 function copyToClipboard() {
     const textArea = document.getElementById('finalText');
-    if(!textArea.value) return alert("オッズを入力してください");
+    if(!textArea.value) return alert("買い目を生成してください");
     textArea.select();
     document.execCommand('copy');
     alert("コピーしました！");
